@@ -25,9 +25,10 @@ screen_size = (990, 600)
 screen = pygame.display.set_mode(screen_size)
 FPS = 60
 tile_images = {
-    'wall': load_image('box.png'),
+    'wall': load_image('wall.png'),
     'empty': load_image('grass.png'),
-    'spawn': load_image('spawn.png')
+    'spawn': load_image('spawn.png'),
+    'finish': load_image('finish.png')
 }
 player_image = load_image('mario.png')
 
@@ -97,8 +98,8 @@ def start_screen():
                   "Если в правилах несколько строк,",
                   "приходится выводить их построчно"]
 
-    fon = pygame.transform.scale(load_image('fon.jpg'), screen_size)
-    screen.blit(fon, (0, 0))
+    #fon = pygame.transform.scale(load_image('fon.jpg'), screen_size)
+    screen.fill(pygame.Color(37, 9, 54))
     font = pygame.font.Font(None, 30)
     text_coord = 50
     for line in intro_text:
@@ -134,7 +135,7 @@ def generate_level(level):
     for y in range(len(level)):
         for x in range(len(level[y])):
             if level[y][x] == '*':
-                Tile('empty', x, y)
+                Tile('finish', x, y)
             elif level[y][x] == '.':
                 Tile('empty', x, y)
             elif level[y][x] == '#':
@@ -168,13 +169,13 @@ def move(hero, movement):
             hero.move(x + 1, y)
     x, y = hero.pos
     if level_map[y][x] == '*':
-        pass  # level completed
+        print('здесь будет оповещение о пройденом уровне')
 
 
 start_screen()
 level_map = load_level('map.map')
 '''tile_width = tile_height = int((''.join(load_level('map.map')[0]))[0:2])
-Изменять Размеры КакУказаноВ 1 строчке файла'''
+Изменять Размеры Как Указано В 1 строчке файла'''
 hero, max_x, max_y = generate_level(level_map)
 while running:
     for event in pygame.event.get():
