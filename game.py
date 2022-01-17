@@ -166,28 +166,105 @@ def start_game():
 def levels():
     global level_map
     screen.fill(pygame.Color(37, 9, 54))
-    levels = []
+    name_levels = []
+    font = pygame.font.Font(None, 40)
+    message = font.render('Мои уровни:', True, pygame.Color(255, 251, 22))
+    screen.blit(message, (80, 215))
     while True:
         pygame.display.update()
         for filename in os.walk("levels"):
-            levels = filename[-1]
+            name_levels = filename[-1]
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    start_screen()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pass
             i = 0
             y = 0
-            for elem in levels:
-                if levels.index(elem) > 3:
-                    y += 125
+            for elem in name_levels:
+                if name_levels.index(elem) > 3 and y == 0:
+                    y += 240
                     i = 0
                 elem = elem[0:-4]
-                button = Button(100, 100)
+                button = Button(175, 175)
                 level_map = load_level(elem + '.map')
-                button.draw(50 + i, 50 + y, elem, selected_level, 100)
-                i += 125
-        '''button.draw(100, 420, 'Уровни', levels, 50)'''
+                button.draw(80 + i, 20 + y, elem, selected_level, 100, 68, 55)
+                i += 210
+            button = Button(805, 60)
+            button.draw(80, 470, 'Создать уровень', create_level, 45, 270, 15)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def create_level():
+    global create_element_x, create_element_y, type, name_level
+    screen.fill(pygame.Color(37, 9, 54))
+    for filename in os.walk("levels"):
+        if len(filename[-1]) < 8:
+            name_level = str(len(filename[-1]) + 1)
+        else:
+            levels()
+    new_level = open(name_level + '.map', "w")
+    for y in range(20):
+        if y == 0:
+            new_level.write('.' * 34 + '\n')
+        elif y == 19:
+            new_level.write('.' * 33 + '\n')
+            new_level.write('.')
+        else:
+            new_level.write('.' * 33 + '\n')
+    new_level.close()
+    while True:
+        pygame.display.update()
+        with open(name_level + '.map', 'r') as f:
+            level = f.read()
+        x, y = 0, 0
+        level = level.split()
+        for element in level:
+            print(element)
+            for elem in element:
+                if elem == '#':
+                    pygame.draw.rect(screen, (255, 251, 22), (x * 30, y * 30, 30, 30), 1)
+                if elem == '.':
+                    pygame.draw.rect(screen, (32, 33, 79), (x * 30, y * 30, 30, 30), 1)
+                    pygame.draw.rect(screen, (37, 9, 54), ((x * 30) + 2, (y * 30) + 2, 26, 26), 1)
+                if elem == '@':
+                    pygame.draw.rect(screen, (139, 0, 255), (x * 30, y * 30, 30, 30), 1)
+                if elem == '*':
+                    pygame.draw.rect(screen, (0, 127, 255), (x * 30, y * 30, 30, 30), 1)
+                x += 1
+            x = 0
+            y += 1
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    new_level.close()
+                    os.replace(name_level + '.map', "levels/" + name_level + '.map')
+                    levels()
+                elif event.key == pygame.K_s:
+                    x, y = pygame.mouse.get_pos()
+                    type = '@'
+                    create_element_x = x // 30
+                    create_element_y = y // 30
+                    create_element()
+                elif event.key == pygame.K_f:
+                    x, y = pygame.mouse.get_pos()
+                    type = '*'
+                    create_element_x = x // 30
+                    create_element_y = y // 30
+                    create_element()
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = pygame.mouse.get_pos()
+                type = '#'
+                create_element_x = x // 30
+                create_element_y = y // 30
+                create_element()
         pygame.display.flip()
         clock.tick(FPS)
 
@@ -214,7 +291,7 @@ def start_screen():
                 terminate()
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pass
-            button.draw(100, 420, 'Уровни', levels, 30)
+            button.draw(100, 420, 'Уровни', levels, 30, 15, 15)
         '''button.draw(100, 420, 'Начать игру', start_game, 50)'''
         pygame.display.flip()
         clock.tick(FPS)
@@ -227,6 +304,64 @@ def selected_level():
     start_game()
 
 
+def check_element(sp, element):
+    flag = False
+    for elem in sp:
+        if element not in elem or element == '#':
+            flag = True
+            if element == '#':
+                flag = delete_element()
+                return flag
+        else:
+            delete_element()
+            flag = False
+            return flag
+    return flag
+
+
+def create_element():
+    new_data = []
+    sp = []
+    with open(name_level + '.map', 'r') as f:
+        old_data = f.read()
+        old_data = old_data.split('\n')
+        for element in old_data:
+            for elem in element:
+                sp.append(elem)
+            new_data.append(sp)
+            sp = []
+    if check_element(new_data, type):
+        del new_data[create_element_y][create_element_x]
+        new_data[create_element_y].insert(create_element_x, type)
+        with open(name_level + '.map', 'w+') as f:
+            for element in new_data:
+                element = ''.join(element)
+                f.write(element + '\n')
+
+
+def delete_element():
+    new_data = []
+    sp = []
+    with open(name_level + '.map', 'r') as f:
+        old_data = f.read()
+        old_data = old_data.split('\n')
+        for element in old_data:
+            for elem in element:
+                sp.append(elem)
+            new_data.append(sp)
+            sp = []
+    flag = True
+    if new_data[create_element_y][create_element_x] != '.':
+        del new_data[create_element_y][create_element_x]
+        new_data[create_element_y].insert(create_element_x, '.')
+        flag = False
+    with open(name_level + '.map', 'w+') as f:
+        for element in new_data:
+            element = ''.join(element)
+            f.write(element + '\n')
+    return flag
+
+
 class Button:
     def __init__(self, width, height):
         self.width = width
@@ -235,21 +370,22 @@ class Button:
         self.active_color = (32, 33, 79)
         self.border_color = (255, 251, 22)
 
-    def draw(self, x, y, message, action, size):
+    def draw(self, x, y, message, action, size, text_offset_x, text_offset_y):
         mouse = pygame.mouse.get_pos()
         click = pygame.mouse.get_pressed()
         if x < mouse[0] < x + self.width and y < mouse[1] < y + self.height:
-            pygame.draw.rect(screen, self.border_color, (x, y, self.width, self.height))
-            pygame.draw.rect(screen, self.active_color, (x + 5, y + 5, self.width - 10, self.height - 10))
             if click[0] == 1 and action is not None:
                 action()
+            pygame.draw.rect(screen, self.border_color, (x, y, self.width, self.height))
+            pygame.draw.rect(screen, self.active_color, (x + 5, y + 5, self.width - 10, self.height - 10))
+
         else:
             pygame.draw.rect(screen, self.border_color, (x, y, self.width, self.height))
             pygame.draw.rect(screen, self.inactive_color, (x + 5, y + 5, self.width - 10, self.height - 10))
 
         font = pygame.font.Font(None, size)
         message = font.render(message, True, pygame.Color(255, 251, 22))
-        screen.blit(message, (x + 15, y + 15))
+        screen.blit(message, (x + text_offset_x, y + text_offset_y))
 
 
 start_screen()
