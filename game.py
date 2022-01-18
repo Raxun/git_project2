@@ -309,30 +309,21 @@ def create_level():
 
 
 def start_screen():
-    intro_text = ["Лабиринт"]
     screen.fill(pygame.Color(37, 9, 54))
-    button = Button(250, 50)
-    font = pygame.font.Font(None, 50)
-    text_coord = 50
-    for line in intro_text:
-        string_rendered = font.render(line, 1, pygame.Color(255, 251, 22))
-        intro_rect = string_rendered.get_rect()
-        text_coord += 100
-        intro_rect.top = text_coord
-        intro_rect.x = 400
-        text_coord += intro_rect.height
-        screen.blit(string_rendered, intro_rect)
-
+    button = Button(400, 60)
+    font = pygame.font.Font(None, 70)
+    message = font.render("Лабиринт", True, pygame.Color(255, 251, 22))
+    screen.blit(message, (370, 150))
     while True:
-        pygame.display.update()
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                terminate()
-            elif event.type == pygame.MOUSEBUTTONDOWN:
-                pass
-            button.draw(100, 420, 'Уровни', levels, 30, 15, 15)
-        pygame.display.flip()
-        clock.tick(FPS)
+            pygame.display.update()
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    terminate()
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    pass
+                button.draw(280, 320, 'Начать игру', levels, 35, 125, 20)
+            pygame.display.flip()
+            clock.tick(FPS)
 
 
 def selected_level():
