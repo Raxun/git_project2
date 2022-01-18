@@ -22,7 +22,8 @@ def load_image(name, colorkey=None):
 pygame.init()
 screen_size = (990, 600)
 screen = pygame.display.set_mode(screen_size)
-FPS = 60
+FPS = 30
+notification = False
 tile_images = {
     'wall': load_image('wall.png'),
     'empty': load_image('grass.png'),
@@ -114,6 +115,7 @@ def generate_level(level):
 
 
 def move(hero, movement):
+    global notification
     x, y = hero.pos
     symbols_true = ['.', '@', '*']
     if movement == 'up':
@@ -130,7 +132,10 @@ def move(hero, movement):
             hero.move(x + 1, y)
     x, y = hero.pos
     if level_map[y][x] == '*':
-        print('здесь будет оповещение о пройденом уровне')
+        notification = True
+        hero.kill()
+        levels()
+
 
 
 def terminate():
@@ -164,13 +169,19 @@ def start_game():
 
 
 def levels():
-    global level_map
+    global name_map, delete_name, notification
     screen.fill(pygame.Color(37, 9, 54))
     name_levels = []
+    if notification:
+        font = pygame.font.Font(None, 40)
+        message = font.render('Уровень пройден!', True, pygame.Color(255, 251, 22))
+        screen.blit(message, (635, 215))
+        notification = False
     font = pygame.font.Font(None, 40)
     message = font.render('Мои уровни:', True, pygame.Color(255, 251, 22))
     screen.blit(message, (80, 215))
     while True:
+
         pygame.display.update()
         for filename in os.walk("levels"):
             name_levels = filename[-1]
@@ -188,20 +199,42 @@ def levels():
                 if name_levels.index(elem) > 3 and y == 0:
                     y += 240
                     i = 0
+                if name_levels.index(elem) > 3:
+                    delete_name = elem
+                    button = Button(175, 50)
+                    button.draw(80 + i, 455, 'удалить', delete_level, 30, 45, 15)
                 elem = elem[0:-4]
                 button = Button(175, 175)
-                level_map = load_level(elem + '.map')
+                name_map = elem + '.map'
                 button.draw(80 + i, 20 + y, elem, selected_level, 100, 68, 55)
                 i += 210
             button = Button(805, 60)
-            button.draw(80, 470, 'Создать уровень', create_level, 45, 270, 15)
+            button.draw(80, 520, 'Создать уровень', create_level, 45, 270, 15)
         pygame.display.flip()
         clock.tick(FPS)
+
+
+def delete_level():
+    name_levels = []
+    for filename in os.walk("levels"):
+        name_levels = filename[-1]
+    for i in range(4, len(name_levels)):
+        if name_levels.index(name_levels[i]) > name_levels.index(delete_name):
+            name = int(name_levels[i][0:-4]) - 1
+            os.replace('levels/' + name_levels[i], 'levels/' + str(name) + '.map')
+        elif name_levels.index(name_levels[i]) == name_levels.index(delete_name):
+            name = int(name_levels[i][0:-4])
+            os.replace('levels/' + name_levels[i], 'levels/' + str(name) + '.map')
+            os.remove('levels/' + delete_name)
+    levels()
 
 
 def create_level():
     global create_element_x, create_element_y, type, name_level
     screen.fill(pygame.Color(37, 9, 54))
+    flag_spawn = False
+    flag_finish = False
+    flag_btn = False
     for filename in os.walk("levels"):
         if len(filename[-1]) < 8:
             name_level = str(len(filename[-1]) + 1)
@@ -224,7 +257,6 @@ def create_level():
         x, y = 0, 0
         level = level.split()
         for element in level:
-            print(element)
             for elem in element:
                 if elem == '#':
                     pygame.draw.rect(screen, (255, 251, 22), (x * 30, y * 30, 30, 30), 1)
@@ -233,20 +265,21 @@ def create_level():
                     pygame.draw.rect(screen, (37, 9, 54), ((x * 30) + 2, (y * 30) + 2, 26, 26), 1)
                 if elem == '@':
                     pygame.draw.rect(screen, (139, 0, 255), (x * 30, y * 30, 30, 30), 1)
+                    flag_spawn = True
                 if elem == '*':
                     pygame.draw.rect(screen, (0, 127, 255), (x * 30, y * 30, 30, 30), 1)
+                    flag_finish = True
                 x += 1
             x = 0
             y += 1
+        if flag_btn:
+            button = Button(990, 600)
+            button.draw(0, 0, 'Внимание! Добавьте старт и финиш', levels, 45, 220, 270)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
             elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    new_level.close()
-                    os.replace(name_level + '.map', "levels/" + name_level + '.map')
-                    levels()
-                elif event.key == pygame.K_s:
+                if event.key == pygame.K_s:
                     x, y = pygame.mouse.get_pos()
                     type = '@'
                     create_element_x = x // 30
@@ -258,7 +291,13 @@ def create_level():
                     create_element_x = x // 30
                     create_element_y = y // 30
                     create_element()
-
+                elif event.key == pygame.K_ESCAPE:
+                    new_level.close()
+                    if flag_spawn and flag_finish:
+                        os.replace(name_level + '.map', "levels/" + name_level + '.map')
+                        levels()
+                    else:
+                        flag_btn = True
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = pygame.mouse.get_pos()
                 type = '#'
@@ -292,13 +331,13 @@ def start_screen():
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 pass
             button.draw(100, 420, 'Уровни', levels, 30, 15, 15)
-        '''button.draw(100, 420, 'Начать игру', start_game, 50)'''
         pygame.display.flip()
         clock.tick(FPS)
 
 
 def selected_level():
-    global hero, max_x, max_y
+    global hero, max_x, max_y, name_map, level_map
+    level_map = load_level(name_map)
     screen.fill(pygame.Color(37, 9, 54))
     hero, max_x, max_y = generate_level(level_map)
     start_game()
