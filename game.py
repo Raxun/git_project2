@@ -76,7 +76,7 @@ class Player(pygame.sprite.Sprite):
     def move(self, x, y):
         self.pos = (x, y)
         self.rect = self.image.get_rect().move(
-            tile_width * self.pos[0] + 10, tile_height * self.pos[1] + 3)
+            tile_width * self.pos[0], tile_height * self.pos[1])
 
 
 player = None
@@ -115,7 +115,6 @@ def generate_level(level):
 
 
 def move(hero, movement):
-    global notification
     x, y = hero.pos
     symbols_true = ['.', '@', '*']
     if movement == 'up':
@@ -132,10 +131,8 @@ def move(hero, movement):
             hero.move(x + 1, y)
     x, y = hero.pos
     if level_map[y][x] == '*':
-        notification = True
         hero.kill()
-        levels()
-
+        levels_completed()
 
 
 def terminate():
@@ -149,34 +146,32 @@ def start_game():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_ESCAPE:
-                    hero.kill()
-                    levels()
-                elif event.key == pygame.K_UP:
-                    move(hero, 'up')
-                elif event.key == pygame.K_DOWN:
-                    move(hero, 'down')
-                elif event.key == pygame.K_LEFT:
-                    move(hero, 'left')
-                elif event.key == pygame.K_RIGHT:
-                    move(hero, 'right')
-
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_ESCAPE]:
+            hero.kill()
+            levels()
+        elif keys[pygame.K_UP]:
+            move(hero, 'up')
+        elif keys[pygame.K_DOWN]:
+            move(hero, 'down')
+        elif keys[pygame.K_LEFT]:
+            move(hero, 'left')
+        elif keys[pygame.K_RIGHT]:
+            move(hero, 'right')
         sprite_group.draw(screen)
         hero_group.draw(screen)
-        clock.tick(FPS)
+        clock.tick(FPS // 2)
+        pygame.event.pump()
         pygame.display.flip()
 
 
 def levels():
-    global name_map, delete_name, notification
+    global name_map, delete_name
     screen.fill(pygame.Color(37, 9, 54))
     name_levels = []
-    if notification:
-        font = pygame.font.Font(None, 40)
-        message = font.render('Уровень пройден!', True, pygame.Color(255, 251, 22))
-        screen.blit(message, (635, 215))
-        notification = False
+    font = pygame.font.Font(None, 40)
+    message = font.render('Уровень пройден!', True, pygame.Color(255, 251, 22))
+    screen.blit(message, (635, 215))
     font = pygame.font.Font(None, 40)
     message = font.render('Мои уровни:', True, pygame.Color(255, 251, 22))
     screen.blit(message, (80, 215))
@@ -210,6 +205,23 @@ def levels():
                 i += 210
             button = Button(805, 60)
             button.draw(80, 520, 'Создать уровень', create_level, 45, 270, 15)
+        pygame.display.flip()
+        clock.tick(FPS)
+
+
+def levels_completed():
+    screen.fill(pygame.Color(37, 9, 54))
+    font = pygame.font.Font(None, 40)
+    message = font.render('Уровень пройден! Для выхода нажмите "Enter"', True, pygame.Color(255, 251, 22))
+    screen.blit(message, (160, 230))
+    while True:
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    levels()
         pygame.display.flip()
         clock.tick(FPS)
 
