@@ -110,7 +110,6 @@ def generate_level(level):
                 Tile('empty', x, y)
                 Tile('spawn', x, y)
                 new_player = Player(x, y)
-                level[y][x] == '.'
     return new_player, x, y
 
 
@@ -169,9 +168,6 @@ def levels():
     global name_map, delete_name
     screen.fill(pygame.Color(37, 9, 54))
     name_levels = []
-    font = pygame.font.Font(None, 40)
-    message = font.render('Уровень пройден!', True, pygame.Color(255, 251, 22))
-    screen.blit(message, (635, 215))
     font = pygame.font.Font(None, 40)
     message = font.render('Мои уровни:', True, pygame.Color(255, 251, 22))
     screen.blit(message, (80, 215))
@@ -327,15 +323,15 @@ def start_screen():
     message = font.render("Лабиринт", True, pygame.Color(255, 251, 22))
     screen.blit(message, (370, 150))
     while True:
-            pygame.display.update()
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    terminate()
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    pass
-                button.draw(280, 320, 'Начать игру', levels, 35, 125, 20)
-            pygame.display.flip()
-            clock.tick(FPS)
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                pass
+            button.draw(280, 320, 'Начать игру', levels, 35, 125, 20)
+        pygame.display.flip()
+        clock.tick(FPS)
 
 
 def selected_level():
